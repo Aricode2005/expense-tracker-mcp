@@ -1,15 +1,18 @@
 """
-Database module for Expense Tracker MCP Server.
+Async database module for Expense Tracker MCP Server.
 
-Owns the SQLite schema (expenses + budgets tables) and provides
-connection helpers used by every tool in main.py.
+Uses aiosqlite for non-blocking I/O. Owns the SQLite schema
+(expenses, budgets, categories tables) and provides async helpers.
 """
 
+import json
 import os
 import sqlite3
-from datetime import datetime, timezone
+
+import aiosqlite
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "expenses.db")
+CATEGORIES_SEED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "categories.json")
 
 # ── Currency ────────────────────────────────────────────────────────
 CURRENCY = "INR"
@@ -20,35 +23,39 @@ PAYMENT_METHODS = frozenset(
 )
 
 
-def get_connection() -> sqlite3.Connection:
-    """Return a connection with Row factory for dict-like access."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")   # better concurrent reads
-    conn.execute("PRAGMA foreign_keys=ON")
-    return conn
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def get_connection():
+    """Return an async connection with Row factory for dict-like access."""
+    conn = await aiosqlite.connect(DB_PATH)
+    try:
+        conn.row_factory = aiosqlite.Row
+        await conn.execute("PRAGMA journal_mode=WAL")
+        await conn.execute("PRAGMA foreign_keys=ON")
+        yield conn
+    finally:
+        await conn.close()
 
 
-def _now_iso() -> str:
-    """Current UTC timestamp in ISO-8601 format."""
-    return datetime.now(timezone.utc).isoformat()
-
-
-def init_db() -> None:
-    """Create tables if they do not already exist."""
-    with get_connection() as conn:
+def _init_db_sync() -> None:
+    """
+    Synchronous DB init — called once at import time to create tables.
+    Uses plain sqlite3 because aiosqlite requires a running event loop.
+    """
+    with sqlite3.connect(DB_PATH) as conn:
         conn.executescript(
             """
             CREATE TABLE IF NOT EXISTS expenses (
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
-                date            TEXT    NOT NULL,          -- YYYY-MM-DD
+                date            TEXT    NOT NULL,
                 amount          REAL    NOT NULL CHECK(amount > 0),
                 category        TEXT    NOT NULL,
                 subcategory     TEXT    NOT NULL DEFAULT '',
                 note            TEXT    NOT NULL DEFAULT '',
                 payment_method  TEXT    NOT NULL DEFAULT 'cash',
                 is_recurring    INTEGER NOT NULL DEFAULT 0 CHECK(is_recurring IN (0, 1)),
-                tags            TEXT    NOT NULL DEFAULT '',  -- comma-separated
+                tags            TEXT    NOT NULL DEFAULT '',
                 created_at      TEXT    NOT NULL,
                 updated_at      TEXT    NOT NULL
             );
@@ -60,8 +67,34 @@ def init_db() -> None:
                 created_at      TEXT    NOT NULL
             );
 
-            -- Speed up date-range queries
+            CREATE TABLE IF NOT EXISTS categories (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                category        TEXT    NOT NULL,
+                subcategory     TEXT    NOT NULL,
+                UNIQUE(category, subcategory)
+            );
+
             CREATE INDEX IF NOT EXISTS idx_expenses_date     ON expenses(date);
             CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);
+            CREATE INDEX IF NOT EXISTS idx_categories_cat    ON categories(category);
             """
         )
+
+        # Seed categories from JSON if the table is empty
+        count = conn.execute("SELECT COUNT(*) FROM categories").fetchone()[0]
+        if count == 0 and os.path.exists(CATEGORIES_SEED_PATH):
+            with open(CATEGORIES_SEED_PATH, "r", encoding="utf-8") as f:
+                cats = json.load(f)
+            rows = []
+            for cat, subs in cats.items():
+                for sub in subs:
+                    rows.append((cat, sub))
+            conn.executemany(
+                "INSERT OR IGNORE INTO categories(category, subcategory) VALUES (?, ?)",
+                rows,
+            )
+            conn.commit()
+
+
+# Run synchronous init at import time
+_init_db_sync()

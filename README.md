@@ -13,12 +13,13 @@
 
 | Feature | Description |
 |---|---|
-| **12 Tools** | Add, list, get, edit, delete, search, summarize, trend, budget, budget status, export, breakdown |
+| **15 Tools** | Add, list, edit, delete, search, summarize, trend, budget, breakdown — plus **editable categories** |
+| **Fully Async** | Non-blocking I/O using `aiosqlite` for high performance |
 | **Budget Tracking** | Set monthly limits per category, get over-budget warnings with utilization % |
 | **Trend Analysis** | Month-over-month spending trends for the last N months |
 | **CSV Export** | Export filtered expenses as CSV — paste directly into Google Sheets / Excel |
 | **Smart Search** | Full-text search across notes and tags |
-| **20 Categories** | Pre-configured with 100+ subcategories (editable JSON) |
+| **Editable Categories** | Pre-seeded with 100+ subcategories, fully editable via `add_category` / `remove_category` |
 | **Input Validation** | Category, date, amount, and payment method validation on every operation |
 | **Currency: ₹ INR** | All responses include `currency: "INR"` for clarity |
 | **Prompt Templates** | Built-in `monthly_report` prompt for structured expense analysis |
@@ -216,9 +217,41 @@ Once installed in Claude Desktop, try:
 
 ---
 
+## 🌐 Remote Deployment (SSE Transport)
+
+Because this server supports SSE (Server-Sent Events), you can deploy it to platforms like **Railway**, **Render**, or **Fly.io**, and connect to it over HTTP.
+
+### Docker Deployment
+
+A `Dockerfile` is included. When deployed to a cloud provider, they will automatically set the `PORT` environment variable. The server will detect this and automatically start in **SSE mode** instead of STDIO.
+
+1. Push this repo to GitHub.
+2. Link the repo in Railway/Render.
+3. The platform will build the Docker container and expose a URL (e.g., `https://my-expense-mcp.up.railway.app`).
+
+### Connecting to a Remote Server
+
+To use your remote server in Claude, update your config:
+
+```json
+{
+  "mcpServers": {
+    "expense-tracker-remote": {
+      "command": "curl",
+      "args": ["-N", "https://my-expense-mcp.up.railway.app/sse"]
+    }
+  }
+}
+```
+*(Note: SSE clients use HTTP endpoints ending in `/sse`)*
+
+---
+
 ## 🛣️ Roadmap
 
-- [ ] **Remote Deployment** — Deploy as a hosted MCP server (SSE transport) on Railway / Fly.io / AWS
+- [x] **Remote Deployment** — Built-in SSE transport support
+- [x] **Fully Async** — Converted to `aiosqlite`
+- [x] **Editable Categories** — Categories managed in SQLite
 - [ ] **Authentication** — API key / OAuth for multi-user support
 - [ ] **Income Tracking** — Track income alongside expenses for net savings
 - [ ] **Recurring Automation** — Auto-add recurring expenses monthly
@@ -233,8 +266,8 @@ Once installed in Claude Desktop, try:
 | Technology | Purpose |
 |---|---|
 | **Python 3.13** | Runtime |
-| **FastMCP** | MCP server framework |
-| **SQLite** | Embedded database (WAL mode) |
+| **FastMCP** | MCP server framework (Async, SSE, STDIO) |
+| **SQLite (aiosqlite)** | Embedded database (WAL mode, non-blocking) |
 | **Model Context Protocol** | AI-tool communication standard |
 | **uv** | Package management & script runner |
 
