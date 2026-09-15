@@ -11,13 +11,27 @@ import sqlite3
 
 import aiosqlite
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "expenses.db")
+# ── Database path ───────────────────────────────────────────────────
+# Local: store alongside main.py
+# Cloud: use DB_DIR env var, or /tmp as fallback for read-only filesystems
+_default_dir = os.path.dirname(os.path.abspath(__file__))
+_db_dir = os.getenv("DB_DIR", _default_dir)
+
+# Test if default dir is writable; if not, fall back to /tmp
+if _db_dir == _default_dir:
+    try:
+        _test_file = os.path.join(_default_dir, ".write_test")
+        with open(_test_file, "w") as f:
+            f.write("test")
+        os.remove(_test_file)
+    except OSError:
+        _db_dir = os.environ.get("TMPDIR", "/tmp")
+
+DB_PATH = os.path.join(_db_dir, "expenses.db")
 CATEGORIES_SEED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "categories.json")
 
-# ── Currency ────────────────────────────────────────────────────────
 CURRENCY = "INR"
 
-# ── Allowed payment methods ─────────────────────────────────────────
 PAYMENT_METHODS = frozenset(
     {"cash", "upi", "credit_card", "debit_card", "net_banking", "wallet"}
 )
@@ -80,7 +94,6 @@ def _init_db_sync() -> None:
             """
         )
 
-        # Seed categories from JSON if the table is empty
         count = conn.execute("SELECT COUNT(*) FROM categories").fetchone()[0]
         if count == 0 and os.path.exists(CATEGORIES_SEED_PATH):
             with open(CATEGORIES_SEED_PATH, "r", encoding="utf-8") as f:
@@ -96,5 +109,4 @@ def _init_db_sync() -> None:
             conn.commit()
 
 
-# Run synchronous init at import time
 _init_db_sync()
