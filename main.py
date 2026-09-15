@@ -910,13 +910,22 @@ Format everything as a clean, readable report with emojis and tables.
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 if __name__ == "__main__":
-    import os
-    
-    # If a PORT environment variable is set, run as an SSE server (remote deployment)
-    # Otherwise, run as a STDIO server (local Claude Desktop)
-    port = os.getenv("PORT")
-    if port:
-        print(f"Starting Expense Tracker MCP Server on port {port} (SSE transport)...")
-        mcp.run(transport="sse", host="0.0.0.0", port=int(port))
+    import sys
+
+    # Usage:
+    #   python main.py              → STDIO  (MCP Inspector / Claude Desktop)
+    #   python main.py --remote     → HTTP   (Remote deployment, streamable-http)
+    #   python main.py --sse        → SSE    (Legacy remote, Server-Sent Events)
+
+    if "--remote" in sys.argv:
+        import os
+        port = int(os.getenv("PORT", "8000"))
+        print(f"🚀 Starting Expense Tracker MCP Server on http://0.0.0.0:{port} (streamable-http)")
+        mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
+    elif "--sse" in sys.argv:
+        import os
+        port = int(os.getenv("PORT", "8000"))
+        print(f"🚀 Starting Expense Tracker MCP Server on http://0.0.0.0:{port} (SSE)")
+        mcp.run(transport="sse", host="0.0.0.0", port=port)
     else:
         mcp.run(transport="stdio")

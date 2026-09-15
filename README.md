@@ -217,33 +217,62 @@ Once installed in Claude Desktop, try:
 
 ---
 
-## 🌐 Remote Deployment (SSE Transport)
+## 🌐 Remote Deployment
 
-Because this server supports SSE (Server-Sent Events), you can deploy it to platforms like **Railway**, **Render**, or **Fly.io**, and connect to it over HTTP.
+This server has **three transport modes** built in — no Docker needed:
 
-### Docker Deployment
+```bash
+# Local (MCP Inspector / Claude Desktop)
+python main.py
 
-A `Dockerfile` is included. When deployed to a cloud provider, they will automatically set the `PORT` environment variable. The server will detect this and automatically start in **SSE mode** instead of STDIO.
+# Remote — modern streamable-http (recommended)
+python main.py --remote
+
+# Remote — legacy SSE
+python main.py --sse
+```
+
+The `PORT` environment variable is respected (default: `8000`).
+
+### Deploy to a Cloud Platform (Railway / Render / Fly.io)
 
 1. Push this repo to GitHub.
-2. Link the repo in Railway/Render.
-3. The platform will build the Docker container and expose a URL (e.g., `https://my-expense-mcp.up.railway.app`).
+2. Link the repo in your cloud platform.
+3. Set the **Start Command** to:
+   ```
+   python main.py --remote
+   ```
+4. The platform injects `PORT` automatically — the server binds to it.
 
-### Connecting to a Remote Server
+### Connect Claude Desktop to a Remote Server
 
-To use your remote server in Claude, update your config:
+Use `npx` to bridge the remote HTTP server into a local STDIO connection:
 
 ```json
 {
   "mcpServers": {
     "expense-tracker-remote": {
-      "command": "curl",
-      "args": ["-N", "https://my-expense-mcp.up.railway.app/sse"]
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://your-deployed-url.com/mcp"
+      ]
     }
   }
 }
 ```
-*(Note: SSE clients use HTTP endpoints ending in `/sse`)*
+
+### Test Remote Mode Locally
+
+```bash
+# Terminal 1 — start the server
+python main.py --remote
+
+# Terminal 2 — connect MCP Inspector to it
+npx @modelcontextprotocol/inspector
+# Then set Transport Type to "Streamable HTTP"
+# and URL to http://localhost:8000/mcp
+```
 
 ---
 
