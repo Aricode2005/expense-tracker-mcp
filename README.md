@@ -246,21 +246,27 @@ The `PORT` environment variable is respected (default: `8000`).
 
 ### Connect Claude Desktop to a Remote Server
 
-Use `npx` to bridge the remote HTTP server into a local STDIO connection:
+Use `npx` to bridge the remote HTTP server into a local STDIO connection for Claude Desktop.
+
+Add this to your `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "expense-tracker-remote": {
+    "expense-iq-remote": {
       "command": "npx",
       "args": [
+        "-y",
+        "@modelcontextprotocol/inspector",
         "mcp-remote",
-        "https://your-deployed-url.com/mcp"
+        "https://expenseiq.fastmcp.app/mcp"
       ]
     }
   }
 }
 ```
+
+> **Note:** The `mcp-remote` command from the inspector package acts as a bridge, allowing Claude Desktop (which expects local STDIO) to communicate with your cloud-hosted HTTP server.
 
 ### Test Remote Mode Locally
 
