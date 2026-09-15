@@ -1,11 +1,12 @@
-# 💰 Expense Tracker MCP Server
+# 💰 ExpenseIQ (MCP Server)
 
 > A production-grade **Model Context Protocol (MCP)** server for personal expense tracking — powered by SQLite, designed for Claude Desktop, and ready for remote deployment.
 
 [![Python 3.13+](https://img.shields.io/badge/Python-3.13%2B-blue.svg)](https://www.python.org/)
 [![MCP](https://img.shields.io/badge/Protocol-MCP-purple.svg)](https://modelcontextprotocol.io/)
 [![FastMCP](https://img.shields.io/badge/Framework-FastMCP-green.svg)](https://github.com/jlowin/fastmcp)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+**Live Server URL:** [https://expenseiq.fastmcp.app/mcp](https://expenseiq.fastmcp.app/mcp)
 
 ---
 
@@ -312,8 +313,4 @@ npx @modelcontextprotocol/inspector
 
 **Aritra Dutta** — [GitHub](https://github.com/Aricode2005) · [Email](mailto:aritraduttauttarpara@gmail.com)
 
----
 
-## 📄 License
-
-MIT — see [LICENSE](LICENSE) for details.

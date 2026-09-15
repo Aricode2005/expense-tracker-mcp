@@ -26,7 +26,7 @@ from db import CURRENCY, PAYMENT_METHODS, get_connection
 # ── Bootstrap ───────────────────────────────────────────────────────
 
 mcp = FastMCP(
-    "ExpenseTracker",
+    "ExpenseIQ",
     instructions=(
         "You are an intelligent expense-tracking assistant. "
         "Use the available tools to add, query, edit, delete, summarise, "
