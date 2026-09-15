@@ -86,9 +86,7 @@ def _row_to_dict(row) -> dict:
     return dict(row)
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  TOOLS — Expense CRUD  (5)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 
 
 @mcp.tool()
@@ -614,9 +612,7 @@ async def get_category_breakdown(category: str, start_date: str, end_date: str) 
     }
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  TOOLS — Budget  (2)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 
 
 @mcp.tool()
@@ -702,9 +698,6 @@ async def get_budget_status(month: str = "") -> dict:
     }
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  TOOLS — Category Management  (3)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
 @mcp.tool()
@@ -745,7 +738,6 @@ async def add_category(category: str, subcategory: str) -> dict:
         return {"status": "error", "message": "Both category and subcategory are required."}
 
     async with get_connection() as conn:
-        # Check if already exists
         existing = await conn.execute_fetchall(
             "SELECT id FROM categories WHERE category = ? AND subcategory = ?",
             (category, subcategory),
@@ -762,7 +754,6 @@ async def add_category(category: str, subcategory: str) -> dict:
         )
         await conn.commit()
 
-        # Return updated list for this category
         rows = await conn.execute_fetchall(
             "SELECT subcategory FROM categories WHERE category = ? ORDER BY subcategory",
             (category,),
@@ -828,9 +819,6 @@ async def remove_category(category: str, subcategory: str = "") -> dict:
             }
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  RESOURCES  (2)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
 @mcp.resource("expense://categories", mime_type="application/json")
@@ -873,9 +861,7 @@ async def get_stats() -> str:
     return json.dumps(stats, indent=2)
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  PROMPTS  (1)
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 
 
 @mcp.prompt()
@@ -905,27 +891,22 @@ Format everything as a clean, readable report with emojis and tables.
 """
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  Entry point
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 
 if __name__ == "__main__":
     import sys
 
-    # Usage:
-    #   python main.py              → STDIO  (MCP Inspector / Claude Desktop)
-    #   python main.py --remote     → HTTP   (Remote deployment, streamable-http)
-    #   python main.py --sse        → SSE    (Legacy remote, Server-Sent Events)
+
 
     if "--remote" in sys.argv:
         import os
         port = int(os.getenv("PORT", "8000"))
-        print(f"🚀 Starting Expense Tracker MCP Server on http://0.0.0.0:{port} (streamable-http)")
+        print(f"Starting Expense Tracker MCP Server on http://0.0.0.0:{port} (streamable-http)")
         mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
     elif "--sse" in sys.argv:
         import os
         port = int(os.getenv("PORT", "8000"))
-        print(f"🚀 Starting Expense Tracker MCP Server on http://0.0.0.0:{port} (SSE)")
+        print(f"Starting Expense Tracker MCP Server on http://0.0.0.0:{port} (SSE)")
         mcp.run(transport="sse", host="0.0.0.0", port=port)
     else:
         mcp.run(transport="stdio")

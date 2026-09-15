@@ -11,13 +11,9 @@ import sqlite3
 
 import aiosqlite
 
-# ── Database path ───────────────────────────────────────────────────
-# Local: store alongside main.py
-# Cloud: use DB_DIR env var, or /tmp as fallback for read-only filesystems
 _default_dir = os.path.dirname(os.path.abspath(__file__))
 _db_dir = os.getenv("DB_DIR", _default_dir)
 
-# Test if default dir is writable; if not, fall back to /tmp
 if _db_dir == _default_dir:
     try:
         _test_file = os.path.join(_default_dir, ".write_test")
